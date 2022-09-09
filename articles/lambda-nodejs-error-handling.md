@@ -3,7 +3,7 @@ title: "AWS Lambda (Node.js) で同期実行時にカスタムエラーを投げ
 emoji: "🥃"
 type: "tech"
 topics: ["aws", "nodejs", "lambda"]
-published: false
+published: true
 ---
 
 # これはなんですか
