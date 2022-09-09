@@ -89,7 +89,7 @@ exports.handler = async (event) => {
 
 実際のレスポンスは以下の通りです。
 
-```
+```json
 {
   "errorType": "CustomError",
   "errorMessage": "this is a error",
