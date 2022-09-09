@@ -60,7 +60,7 @@ exports.handler = async (event) => {
   "errorType": "Error",
   "errorMessage": "this is a error",
   "trace": [
-    "CustomError: this is a error",
+    "Error: this is a error",
     "    at Runtime.exports.handler (/var/task/index.js:9:11)",
     "    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1028:29)"
   ]
