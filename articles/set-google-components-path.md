@@ -1,9 +1,9 @@
 ---
-title: "gcloud components install で入れたコマンドのパスを通す(fish, homebrew)"
+title: "gcloud components install でインストールしたコマンドのパスを通す(fish, homebrew)"
 emoji: "🎃"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ['gcp']
-published: false
+published: true
 ---
 
 # これはなんですか
@@ -29,7 +29,7 @@ $ which gcloud
 
 ## cbtのインストール
 
-ドキュメントに従って `gcloud components install` コマンドでインストールします。
+[ドキュメント](https://cloud.google.com/bigtable/docs/cbt-overview?hl=ja)に従って `gcloud components install` コマンドでインストールします。
 
 ```sh
 $ gcloud components update
@@ -78,6 +78,6 @@ $ cbt listinstances
 
 [cbt ツールの概要  |  Cloud Bigtable ドキュメント  |  Google Cloud](https://cloud.google.com/bigtable/docs/cbt-overview?hl=ja)
 
-以下の通り環境変数の記載あり
+以下の通り環境変数の記載があります。
 
 > 注: gcloud CLI をホーム ディレクトリ以外のディレクトリにインストールする場合は、PATH 環境変数に google-cloud-sdk/bin へのパスを設定する必要があります。
