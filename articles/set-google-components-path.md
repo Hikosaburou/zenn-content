@@ -57,7 +57,7 @@ bootstrapping/            cbt*                      docker-credential-gcloud* gi
 
 環境変数 `PATH` に上記のパスを追加します。
 
-```sh($HOME/.config/fish/config.fish)
+```sh:config.fish
 ... (略)
 
 fish_add_path /opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
