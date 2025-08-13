@@ -3,7 +3,7 @@ title: "FastlyのRealtime Log Streamingで苦労したあれこれ"
 emoji: "🪵"
 type: "tech"
 topics: ["fastly", "vcl", "bigquery"]
-published: false
+published: true
 ---
 
 ## これはなんですか
