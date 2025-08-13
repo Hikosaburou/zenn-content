@@ -8,7 +8,7 @@ published: true
 
 ## これはなんですか
 
-* FastlyのRealtime Log Streaming機能を使って試行錯誤したので、そこで知った細かいTipsを書きます。
+* FastlyのRealtime Log Streaming機能を使って試行錯誤した際に知った細かいTipsを書きます。
 * 以下のサンプルが広いユースケースをカバーしているので、これを読み解いて必要な要素をロギングすることをお勧めします。
     * [Copy of Comprehensive logging, one value per line - Fastly Fiddle](https://fiddle.fastly.dev/fiddle/89e5e296)
 
@@ -16,7 +16,7 @@ published: true
 
 * ワイルドカード表記のドメインでCDN Serviceをホストしています。
     * ex `*.myendpoint.example.com`
-* ワイルドカードに当てはまるサブドメインごとにアクセスログを集計しようとしています。
+* ワイルドカードに当てはまるサブドメインごとにアクセスログを集計したいと考えています。
     * アクセス数
     * データ転送量
     * Fastly Image Optimizer (IO) リクエスト数
@@ -29,7 +29,7 @@ FastlyのLog Streamingによるログの記録はベストエフォートです�
 
 ## BigQueryにFastlyのアクセスログを転送する
 
-基本的にはドキュメントに書いてある通りに設定すればOKです。
+基本的にはドキュメントの記載通りに設定すれば問題ありません。
 
 [About Fastly's real-time log streaming features | Fastly Documentation](https://www.fastly.com/documentation/guides/integrations/streaming-logs/about-fastlys-realtime-log-streaming-features/#how-real-time-log-streaming-works)
 
@@ -54,13 +54,11 @@ TerraformでIAM Impersonation（アカウントに成り代わる権限を振る
 
 ## Fastly Image Optimizerによる画像変換の有無を記録する
 
-ドキュメントを追いきれなかったのでFastlyのサポートの方に聞きました。
-
-結果、レスポンスヘッダの`Fastly-Stats`を使えば良いことがわかりました。
+Fastlyのサポートに問い合わせました。結果、レスポンスヘッダの`Fastly-Stats`を使用すればよいことがわかりました。
 
 [Fastly-Stats | Fastly Documentation](https://www.fastly.com/documentation/reference/http/http-headers/Fastly-Stats/)
 
-レスポンスヘッダはVCL上で`resp.http.{NAME}`でアクセスできるので、次のようにログフォーマットを設定しました。
+レスポンスヘッダはVCL上で`resp.http.{NAME}`という変数でアクセスできるため、次のようにログフォーマットを設定しました。
 
 ```vcl:vcl_log
   {""fastly_is_transformed_by_io":"} if(resp.http.Fastly-Stats ~ "io=1", "true", "false") {", "}
@@ -70,24 +68,23 @@ TerraformでIAM Impersonation（アカウントに成り代わる権限を振る
 
 ## データ転送量集計用のメトリクスを記録する
 
-こちらもFastlyのサポートの方に聞きました。
-Websocketを使わない場合は次の2つの変数を使って上りと下りのデータ転送量を計算すればOKです。
+こちらもFastlyのサポートに問い合わせました。Websocketを使わない場合は、次の2つの変数を使って上りと下りのデータ転送量を計算できます。
 
-* [bereq.bytes_written]()
+* [bereq.bytes_written](https://www.fastly.com/documentation/reference/vcl/variables/backend-request/bereq-bytes-written/)
     * バックエンドリクエスト全体のサイズ
-* [resp.bytes_written]()
+* [resp.bytes_written](https://www.fastly.com/documentation/reference/vcl/variables/client-response/resp-bytes-written/)
     * クライアントへのレスポンス全体のサイズ
 
 ## Shielding設定時の注意点
 
-FastlyにはShieldingという機能があります。
+FastlyにはShielding（シールド）という機能があります。
 
 [Shielding | Fastly Documentation](https://www.fastly.com/documentation/guides/getting-started/hosts/shielding/)
 
-Fastlyはキャッシュサーバー群を[POP](https://www.fastly.com/documentation/guides/getting-started/concepts/using-fastlys-global-pop-network/)という単位でグループ化しています。Shieldingでは、指定したPOPがShield POPとなり、世界中のPOP（Edge POP）からのオリジンへのリクエストをShield POPが中継するという機能です。オリジンへのリクエストをShield POPが受け持つことにより、オリジンへのリクエスト回数を減らすことができるというメリットがあります。
+Fastlyはキャッシュサーバーグループを[POP（Point of Presence）](https://www.fastly.com/documentation/guides/getting-started/concepts/using-fastlys-global-pop-network/)という単位で管理しています。Shieldingでは、指定したPOPがShield POPとなり、世界中のPOP（Edge POP）からのオリジンへのリクエストをShield POPが中継します。これにより、オリジンへのリクエスト回数を減らすことができます。
 
-一方で、Shieldingを有効にするとEdge POPとShield POPの両方で同じVCLが動くことになるため、ヘッダの操作やログ設定を工夫する必要が生じます。
-また、シールド間の通信はFastlyの課金対象となるため、ログからデータ転送量を計算する際にはシールド間通信の有無を考慮する必要があります。
+ただし、Shieldingを有効にするとEdge POPとShield POPの両方で同じVCLが実行されるため、ヘッダの操作やログ設定に注意が必要です。
+また、シールド間通信はFastlyの課金対象となるため、ログからデータ転送量を計算する際にはシールド間通信の有無を考慮する必要があります。
 
 ### ログをEdge POPでのみ記録する
 
@@ -107,7 +104,7 @@ if (fastly.ff.visits_this_service == 0) {
 
 こうすることで、シールド間通信が走った際にEdge POPでのみログを記録できます。
 
-なお、Realtime Log StreamingにはConditionという設定が存在するので、そちらに条件式を書くことでも同様に設定できます。以下はTerraformの設定例です。
+なお、Realtime Log StreamingにはCondition（条件）という設定が存在するので、そちらに条件式を書くことでも同様に設定できます。以下はTerraformの設定例です。
 
 ```terraform
   condition {
@@ -131,9 +128,10 @@ if (fastly.ff.visits_this_service == 0) {
 
 Shieldingが有効な場合、VCLはEdge POPとShield POPの両方で動作するため、`vcl_deliver`サブルーチンで単純に`unset resp.http.{NAME}`と書いてレスポンスヘッダを落とすと、Shield POPの時点でレスポンスヘッダが落ちてしまいます。Edge POPはShield POPのレスポンスを元に処理をするため、`resp.http.{NAME}`が使えなくなります。
 
-レスポンスヘッダの値をログに使いつつクライアントへのレスポンスからのみ除外するには、次のように`fastly.ff.visits_this_service`変数を使って、Edge POPの場合のみレスポンスヘッダを落とすようにします。
+レスポンスヘッダの値を取り回しつつ、クライアントへのレスポンスからのみ除外するには、`fastly.ff.visits_this_service`変数を使ってEdge POPの場合のみレスポンスヘッダを削除します。
 
-```vcl
+```vcl:vcl_deliver
+# resp.http.log-origin の値を取り回した後にレスポンスから落とす
 if (fastly.ff.visits_this_service == 0) {
   unset resp.http.log-origin;
 }
@@ -145,7 +143,7 @@ Edge POPとShield POP間のシールド間通信のデータ転送量はFastly�
 
 [Copy of Comprehensive logging, one value per line - Fastly Fiddle](https://fiddle.fastly.dev/fiddle/89e5e296)
 
-このサンプルは様々なログを記録しているため、シールド間通信の記録に必要な要素のみ追ってみます。まず、シールド間通信の有無は `fastly_is_shield` というフィールドで記録しています。 `vcl_log` サブルーチン内の該当箇所を抜粋します。
+このサンプルは様々なログを記録しているため、シールド間通信の記録に必要な要素のみ確認してみます。シールド間通信の有無は `fastly_is_shield` フィールドで記録されています。`vcl_log` サブルーチン内の該当箇所を抜粋します。
 
 ```vcl:vcl_log
   {""fastly_is_shield":"} if(req.http.log-origin:shield == server.datacenter, "true", "false") {", "}
@@ -161,13 +159,13 @@ if (resp.http.log-origin) {
 }
 ```
 
-先ほど出てきた`log-origin:shield`という表記は、`:`演算子を使って`log-origin`ヘッダーの`shield`サブフィールドにアクセスしていることを意味しています。したがって、`log-origin`をコピーすればサブフィールドである`shield`の値もコピーできます。
+先ほど出てきた`log-origin:shield`という表記は、`:`演算子を使って`log-origin`ヘッダの`shield`サブフィールドにアクセスしていることを意味しています。したがって、`log-origin`をコピーすればサブフィールドである`shield`の値もコピーできます。
 
 また、Fastly VCLではオリジンへのリクエスト以降、[リクエストヘッダ(`req.http.{NAME}`)](https://www.fastly.com/documentation/reference/vcl/variables/client-request/req-http/)の値は意味を持ちません。その性質を利用して、後続のサブルーチン(`vcl_deliver`,`vcl_log`)で変数のように使うことが多くあります。
 
 `resp.http.log-origin`レスポンスヘッダを追いかけると、`vcl_fetch`サブルーチンで`beresp.http.log-origin`にアクセスしていることがわかります。
 
-```vcl:fetch
+```vcl:vcl_fetch
 if (req.backend.is_origin) {
   set beresp.http.log-origin:shield = server.datacenter;
 }
@@ -183,7 +181,7 @@ if (req.backend.is_origin) {
 1. Shield POP上でVCLにしたがってリクエストを処理し、`vcl_fetch`サブルーチンに到達する。
 1. Shield POPはオリジンをバックエンドに持つため、`if(req.backend.is_origin) {...}`内の処理を実行し、`log-origin:shield`ヘッダに`server.datacenter`変数の値を詰める。
 1. `log-origin`ヘッダは値を持つので、Shield POPは`vcl_deliver`サブルーチンの`if (resp.http.log-origin) {...}`を実行し、リクエストヘッダに`log-origin`ヘッダを設定する。
-1. `vcl_log`サブルーチンで`log-origin:shield`リクエストヘッダの値を比較してログとして記録する。Shield POP上でのみ処理を行っているため`server.datacenter`の値は一致し、`true`となる。
+1. `vcl_log`サブルーチンで`log-origin:shield`リクエストヘッダの値を比較してログとして記録する。Shield POP上でのみ処理を行っているため`server.datacenter`の値は一致し、`fastly_is_shield`は`true`となる。
 
 次に、Edge POPからShield POPを経由してオリジンまでリクエストを行う場合の処理順序を見てみます。
 
@@ -193,8 +191,9 @@ if (req.backend.is_origin) {
 1. Edge POP上で`vcl_fetch`サブルーチンに到達する。
 1. Edge POPのバックエンドはShield POPであるため、Edge POPは`if(req.backend.is_origin) {...}`を実行せず、Shield POPが返した`beresp.http.log-origin`の値を保持する。
 1. `log-origin`ヘッダは値を持つので、Edge POPは`vcl_deliver`サブルーチンで`if (resp.http.log-origin) {...}`を実行し、リクエストヘッダに`log-origin`ヘッダを設定する。
-1. `vcl_log`サブルーチンで`log-origin:shield`リクエストヘッダの値を比較してログとして記録する。Edge POPとShield POPは異なる`server.datacenter`の値を持つので`false`となる。
+1. `vcl_log`サブルーチンで`log-origin:shield`リクエストヘッダの値を比較してログとして記録する。Edge POPとShield POPは異なる`server.datacenter`の値を持つので`fastly_is_shield`は`false`となる。
 
+このように、それぞれの場合に応じて`fastly_is_shield`が適切な値になることがわかります。
 
 ## トラブルシュート用のAPIエンドポイント
 
